@@ -114,7 +114,7 @@ def docx_properties(zf, opts):
 	files.remove('docProps/core.xml')
 
 	print('Erstellt: ' + res['created'] + ', zuletzt bearbeitet: ' + res['modified'] + (', Zuletzt gedruckt: ' + res['last_printed'] if 'last_printed' in res else ''))
-	print('Text-Revisionen: ' + str(res['revisions_index']) + ', Dokument-Revisionen: ' + str(res['revisions_metadata']-1))
+	print('Text-Revisionen: ' + str(res['revisions_index']) + ', Dokument-Revisionen: ' + str(res['revisions_metadata']))
 
 	files.discard('[Content_Types].xml') # machine-generated and content-free
 	files.discard('_rels/.rels') # always identical
