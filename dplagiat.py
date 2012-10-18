@@ -205,10 +205,12 @@ document.addEventListener('DOMContentLoaded', onLoad, false);
 	revBytes = collections.defaultdict(int)
 	for text,rev in revData:
 		revBytes[rev] += len(text)
+	byteCount = sum(revBytes.values())
 	revsNode = out.xpath('//*[@id="revs"]')[0]
 	for rev in revOrder:
 		revNode = etree.Element('a')
 		revNode.text = rev + ' (' + str(revBytes[rev]) + ' Zeichen)'
+		revNode.attrib['title'] = str(int(100 * revBytes[rev] / byteCount)) + '%'
 		revNode.attrib['href'] = '#first-' + rev
 		revNode.attrib['class'] = 'rev-' + rev
 		revNode.attrib['data-rev'] = rev
