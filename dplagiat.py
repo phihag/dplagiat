@@ -142,7 +142,7 @@ function onLoad() {
 document.addEventListener('DOMContentLoaded', onLoad, false);
 </script>
 <style type="text/css">
-#checksum {font-family: monospace;}
+#checksum,#template {font-family: monospace;}
 #revs {width: 15em; position: absolute; position: fixed; right: 0; top: 0; height: 100%; overflow-y: auto;}
 #revs a {display: block; color: black !important; text-decoration: none !important; font-size: 110%; padding: 0.5em 0em 0.5em 0.65em; font-family: sans-serif; }
 #text {white-space: pre-wrap; margin-right: 17em;}
@@ -154,7 +154,15 @@ document.addEventListener('DOMContentLoaded', onLoad, false);
 </head>
 <body>
 <h1></h1>
-<p>SHA256: <span id="checksum"></span></p>
+<p>
+<div>SHA256: <span id="checksum"></span></div>
+<div>Anzahl Speichervorgänge: <strong id="saveCount"></strong></div>
+<div>Autor: <span id="creator"></span> (Zuletzt geändert von <span id="lastModifiedBy"></span>)</div>
+<div id="titleContainer"></div>
+<div>Erstellt: <span id="created"/>, zuletzt bearbeitet: <span id="modified"/>, zuletzt gedruckt: <span id="last_printed"/></div>
+<div><span id="appId"></span> (<span id="template"></span>)</div>
+</p>
+
 <div id="revs"/>
 <div id="text"></div>
 </body>
@@ -164,6 +172,21 @@ document.addEventListener('DOMContentLoaded', onLoad, false);
 	out.xpath('//h1')[0].text = docData['filename']
 	out.xpath('//title')[0].text = docData['filename']
 	out.xpath('//*[@id="checksum"]')[0].text = docData['sha256']
+	out.xpath('//*[@id="saveCount"]')[0].text = str(docData['revisions_metadata'])
+	out.xpath('//*[@id="appId"]')[0].text = docData['appId']
+	out.xpath('//*[@id="template"]')[0].text = docData['template']
+	out.xpath('//*[@id="creator"]')[0].text = docData['creator']
+	out.xpath('//*[@id="lastModifiedBy"]')[0].text = docData['lastModifiedBy']
+	if 'title' in docData:
+		titleContainer = out.xpath('//*[@id="titleContainer"]')[0]
+		titleContainer.text = 'Titel: '
+		titleNode = etree.Element('span')
+		titleNode.text = docData['title']
+		titleContainer.append(titleNode)
+	out.xpath('//*[@id="created"]')[0].text = docData['created']
+	out.xpath('//*[@id="modified"]')[0].text = docData['modified']
+	if 'last_printed' in docData:
+		out.xpath('//*[@id="last_printed"]')[0].text = docData['last_printed']
 
 	revOrder = []
 	seenRev = set()
@@ -178,9 +201,6 @@ document.addEventListener('DOMContentLoaded', onLoad, false);
 			span.attrib['id'] = 'first-' + rev
 			seenRev.add(rev)
 		textNode.append(span)
-
-
-	docData['revisions_metadata']
 
 	revBytes = collections.defaultdict(int)
 	for text,rev in revData:
@@ -206,8 +226,6 @@ def docx_properties(zf, filename, opts):
 	res['filename'] = os.path.basename(filename)
 	with open(filename, 'rb') as f:
 		res['sha256'] = hashlib.sha256(f.read()).hexdigest()
-	print(res['filename'])
-	print(res['sha256'])
 
 	bad_fn = zf.testzip()
 	if bad_fn:
@@ -253,26 +271,25 @@ def docx_properties(zf, filename, opts):
 	files.remove('word/settings.xml')
 
 	props_app = etree.fromstring(zf.read('docProps/app.xml'))
-	template = _xpath_text(props_app, '/ep:Properties/ep:Template')
+	res['template'] = _xpath_text(props_app, '/ep:Properties/ep:Template')
 	app = _xpath_text(props_app, '/ep:Properties/ep:Application')
 	appVersion = _xpath_text(props_app, '/ep:Properties/ep:AppVersion')
 	if appVersion is None:
-		appId = '(Offiziell) ' + app + ' (wahrscheinlich LibreOffice/OpenOffice)'
+		res['appId'] = '(Offiziell) ' + app + ' (wahrscheinlich LibreOffice/OpenOffice)'
 	else:
 		appVersion = {
 			'14.0000': '2010',
 		}.get(appVersion, appVersion)
-		appId = app + ' ' + appVersion
-	print(appId + ' (Template: ' + template + ')')
+		res['appId'] = app + ' ' + appVersion
 	files.remove('docProps/app.xml')
 
 	props_core = etree.fromstring(zf.read('docProps/core.xml'))
-	creator = _xpath_text(props_core, '//dc:creator')
-	lastModifiedBy = _xpath_text(props_core, '//cp:lastModifiedBy')
-	print('Autor: ' + creator + (' (Zuletzt geändert von ' + lastModifiedBy + ')' if creator != lastModifiedBy else ''))
+	res['creator'] = _xpath_text(props_core, '//dc:creator')
+	res['lastModifiedBy'] = _xpath_text(props_core, '//cp:lastModifiedBy')
 	title = _xpath_text(props_core, '//dc:title')
 	if title is not None:
-		print('Titel: ' + (title if title else '[leer]'))
+		res['title'] = title if title else '[leer]'
+
 	res['created'] = _xpath_text(props_core, '//dcterms:created')
 	res['modified'] = _xpath_text(props_core, '//dcterms:modified')
 	lastPrinted = _xpath_text(props_core, '//cp:lastPrinted')
@@ -290,6 +307,12 @@ def docx_properties(zf, filename, opts):
 		with open(os.path.join(opts.extract_dir, res['filename'] + '.html'), 'wb') as outf:
 			outf.write(html.encode('utf-8'))
 
+	print(res['filename'])
+	print(res['sha256'])
+	print(res['appId'] + ' (Template: ' + res['template'] + ')')
+	print('Autor: ' + res['creator'] + (' (Zuletzt geändert von ' + res['lastModifiedBy'] + ')' if res['creator'] != res['lastModifiedBy'] else ''))
+	if 'title' in res:
+		print('Titel: ' + res['title'])
 	print('Erstellt: ' + res['created'] + ', zuletzt bearbeitet: ' + res['modified'] + (', Zuletzt gedruckt: ' + res['last_printed'] if 'last_printed' in res else ''))
 	print('Text-Revisionen: ' + str(res['revisions_index']) + ', Dokument-Revisionen: ' + str(res['revisions_metadata']))
 
