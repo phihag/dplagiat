@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # coding: utf-8
 
 from __future__ import division
@@ -304,10 +304,11 @@ def docx_properties(zf, filename, opts):
 	revData = docx_docRevisions(doc)
 	if opts.write_revision_html:
 		html = _revisionHTML(revData, res)
+		assert isinstance(html, bytes)
 		if not os.path.exists(opts.extract_dir):
 			os.makedirs(opts.extract_dir)
 		with open(os.path.join(opts.extract_dir, res['filename'] + '.html'), 'wb') as outf:
-			outf.write(html.encode('utf-8'))
+			outf.write(html)
 
 	print(res['filename'])
 	print(res['sha256'])
@@ -330,4 +331,5 @@ def analyze(fn, opts):
 if __name__ == '__main__':
 	main()
 
+# TODO always generate HTML (text output optional), and offer to open it in webbrowser
 # TODO: fonts
