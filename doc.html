@@ -6,7 +6,7 @@
     <title>Forensische Analyse von .docx-Dateien zur Plagiatserkennung</title>
 <style type="text/css">
 .footnote {
-    display: none;
+    vertical-align:top; font-size:0.6em; line-height:100%;
 }
 header > h1 {text-align: center; margin-bottom: 0;}
 header > .author {text-align: center; font-size: 120%;}
@@ -32,35 +32,37 @@ table td, table th {border: 1px solid #000; padding: 0.1em 0.3em;}
 
 <p>dplagiat ist bisher nur auf der Kommandozeile ausführbar und erstellt dann wahlweise eine HTML-Ausgabe-Datei oder fasst die Ergebnisse direkt zusammen. Der Quellcode ist unter <a href="https://github.com/phihag/dplagiat">https://github.com/phihag/dplagiat</a> unter den Bedingungen der  <a href="http://www.gnu.org/licenses/agpl.txt">AGPL</a> frei einseh-, verwend- und veränderbar.</p>
 
+<h2>Ausgabe</h2>
+
+<p>Die wichtigsten von <em>dplagiat</em> erfassten Daten sind die die <code>rsIdr</code>(Section Addition Revision ID / Revision Identifier for Paragraph)-Metadaten<span class="footnote">Dokumentiert in <a href="http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-376,%20Fourth%20Edition,%20Part%201%20-%20Fundamentals%20And%20Markup%20Language%20Reference.zip">ECMA-376 4th edition Part 1, § 17.15.1.70</a></span>. Das Textverarbeitungsprogramm (z.B. Microsoft Office) wählt bei jedem Speichervorgang einen zufälligen Wert, mit dem alle seit dem letztem Speichervorgang hinzugefügten, entfernten oder bearbeiteten<span class="footnote">(aber nicht anders formatierten)</span> Textteile markiert werden. Mit der <code>rsIdr</code> lassen sich Aussagen über die Länge der einzelnen Arbeitssitzungen und über das Einfügen von Texten aus anderen Dokumenten machen. Allerdings ist keine zeitliche Zuordnung oder Ordnung der Arbeitssitzungen möglich.</p>
+
+<p>Außerdem erlauben Anzahl der Speichervorgänge, Erstellungs- und das Bearbeitungsdatum eine Einordnung der <code>rsIdr</code>-Informationen. Die nachfolgende Tabelle zeigt, welche Auswirkungen häufige Operationen auf diese Daten (mit Microsoft Office) haben:</p>
+
+<table>
+<thead>
+<tr><th>Aktion</th><th>#Speichervorgänge</th><th><code>rsIdr</code></th><th>Erstellungsdatum</th><th>Bearbeitungsdatum</th></tr>
+</thead>
+<tbody>
+<tr><th>Erstellen einer Datei</th><td>=1</td><td>-</td><td>Wird gesetzt</td><td>Wird gesetzt</td></tr>
+<tr><th>Hinzufügen/Ändern von Text</th><td>-</td><td>rsIdr-Zuweisungen</td><td>-</td><td>-</td></tr>
+<tr><th>Speichern</th><td>+1</td><td>neue rsIdrs</td><td>-</td><td>Wird gesetzt</td></tr>
+<tr><th>Speichern unter neuem Namen</th><td>=2</td><td>-</td><td>Wird gesetzt</td><td>Wird gesetzt</td></tr>
+<tr><th>Einfügen von kopiertem Inhalt</th><td>-</td><td>Neuer Inhalt taucht unter <strong>einer</strong> rsIdr auf</td><td>-</td><td>-</td></tr>
+<tr><th>Umbenennen im Explorer</th><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+</tbody>
+</table>
+
 <h2>Sicherheitsabschätzungen</h2>
 
 <p>Die Verwendbarkeit der Ergebnisse von dplagiat hängt von einer zentralen Voraussetzung ab: nämlich das die analysierten Dateien weder unbeabsichtlich noch beabsichtigt manipuliert wurden. Prinzipiell könnten z.B. Software-Fehler (relativ unwahrscheinlich) oder Bitfehler (sehr unwahrscheinlich) auftreten. Da die <code>rsidr</code>-Werte, auf die die Analyse aufbaut, zufällig ausgewürfelt werden, kann es zu Kollisionen kommen, aufgrund deren zwei Segmente als eines angezeigt werden würden. Die Wahrscheinlichkeit hiervon hängt von der Anzahl der Segmente ab und schwankt für die bisher untersuchten Dokumente zwischen 0,0001 und 0,1 Prozent. Zusammenfassend sind solche Zufallsfehler unwahrscheinlich.</p>
 
 <p>Allerdings ist es ohne weiteres möglich, docx-Dokumente beabsichtigt zu manipulieren und die Metadaten zu fälschen. Dafür sind noch nicht einmal spezielle Programmierkenntnisse oder Programme erforderlich; schon mit auf praktisch jedem Betriebssystem vorhandenen Editoren und Tools können alle untersuchten Informationen gefälscht werden. Dies kann leider nur sehr beschränkt erkannt werden. Solche Unregelmäßigkeiten wurden nicht gefunden.</p>
 
-<h2>Ausgabe</h2>
-
-<p>Die wichtigsten von <em>dplagiat</em> erfassten Daten sind die Anzahl der Speichervorgänge, die <code>rIdr</code>-Metadaten, sowie das Erstellungs- und das Bearbeitungsdatum. Die nachfolgende Tabelle zeigt, welche Auswirkungen häufige Operationen auf diese Daten (mit Microsoft Office) haben:</p>
-
-<table>
-<thead>
-<tr><th>Aktion</th><th>#Speichervorgänge</th><th><code>rIdr</code></th><th>Erstellungsdatum</th><th>Bearbeitungsdatum</th></tr>
-</thead>
-<tbody>
-<tr><th>Erstellen einer Datei</th><td>=1</td><td>-</td><td>Wird gesetzt</td><td>Wird gesetzt</td></tr>
-<tr><th>Hinzufügen/Ändern von Text</th><td>-</td><td>rIdr-Zuweisungen</td><td>-</td><td>-</td></tr>
-<tr><th>Speichern</th><td>+1</td><td>neue rIdrs</td><td>-</td><td>Wird gesetzt</td></tr>
-<tr><th>Speichern unter neuem Namen</th><td>=2</td><td>-</td><td>Wird gesetzt</td><td>Wird gesetzt</td></tr>
-<tr><th>Einfügen von kopiertem Inhalt</th><td>-</td><td>Neuer Inhalt taucht unter <strong>einer</strong> rIdr auf</td><td>-</td><td>-</td></tr>
-<tr><th>Umbenennen im Explorer</th><td>-</td><td>-</td><td>-</td><td>-</td></tr>
-</tbody>
-</table>
-
 <h2>Bewertung</h2>
 
-<p>Mit diesen Informationen kann also die Bearbeitungshistorie approximiert werden. Bei einem normalem Dokument in Bearbeitung würde man ein frühes Erstellungsdatum, eine große Anzahl von Speichervorgängen sowie viele durch <code>rIdr</code>s bezeichnete Sektionen von variabler, aber kleiner Größe erwarten. Wenn der Student kurz vor Abgabe die Datei unter einem neuem Namen abgespeichert hat, sind späte Erstellungs-/Bearbeitungsdaten und eine vergleichsweise niedrige Zahl von Speichervorgängen zu erwarten.</p>
+<p>Mit diesen Informationen kann also die Bearbeitungshistorie approximiert werden. Bei einem normalem Dokument in Bearbeitung würde man ein frühes Erstellungsdatum, eine große Anzahl von Speichervorgängen sowie viele durch <code>rsIdr</code>s bezeichnete Sektionen von variabler, aber kleiner Größe erwarten. Wenn der Student kurz vor Abgabe die Datei unter einem neuem Namen abgespeichert hat, sind späte Erstellungs-/Bearbeitungsdaten und eine vergleichsweise niedrige Zahl von Speichervorgängen zu erwarten.</p>
 
-<p>Wenn allerdings das Dokument durch eine oder zwei sehr große Sektionen dominiert wird und nur selten gespeichert wurde, dann muss der Inhalt aus einer anderen Datei kopiert worden sein. Natürlich ist es vorstellbar, dass Studenten in der Abgabehektik das gesamte Dokument oder große Teile in eine neue Datei kopieren und dann abspeichern. Wenn allerdings die Datei schon vor Monaten erstellt wurde, der gesamte Inhalt aber aus einer anderen Datei kam, ist die einzig naheliegende Interpretation, dass die Datei auf Vorrat erstellt wurde und die eigentliche Arbeit in einer anderen Datei statt fand. Diese Angabe wäre jedoch jedoch mindestens erklärungsbedürftig; und deutet sonst auf das Verfassen des Dokuments auf einem anderem Rechner, also wahrscheinlich von einer anderen Person hin.</p>
+<p>Wenn allerdings das Dokument durch eine oder zwei sehr große Sektionen dominiert wird und nur selten gespeichert wurde, dann muss der Inhalt aus einer anderen Datei kopiert worden sein. Natürlich ist es vorstellbar, dass Studenten in der Abgabehektik das gesamte Dokument oder große Teile in eine neue Datei kopieren und dann abspeichern. Wenn allerdings die Datei schon vor Monaten erstellt wurde, der gesamte Inhalt aber aus einer anderen Datei kam, ist die einzig naheliegende Interpretation, dass die Datei auf Vorrat erstellt wurde und die eigentliche Arbeit in einer anderen Datei statt fand. Diese Angabe wäre jedoch jedoch mindestens erklärungsbedürftig<span class="footnote">z.B. durch das (atypische) Verfassen einer Arbeit in vielen Textdokumenten mit andauerndem Hin- und Her-Kopieren</span>; und deutet sonst auf das Verfassen des Dokuments auf einem anderem Rechner, also wahrscheinlich von einer anderen Person hin.</p>
 
 <h1>Fazit</h1>
 
