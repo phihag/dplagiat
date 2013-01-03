@@ -15,26 +15,45 @@ table {border-collapse: collapse;}
 table>tbody th {text-align: left;}
 table td, table th {border: 1px solid #000; padding: 0.1em 0.3em;}
 
+p {
+  text-align: justify;
+  prince-hyphenate: auto;
+  hyphens: auto;
+}
+
+:lang(de) {
+  prince-hyphenate-patterns: url("hyph_de_DE_utf8.dic");
+}
+
 @media print {
 .footnote {
-    display: footnote;
+    vertical-align: baseline; font-size: 80%; padding-left: 0.5em;
+    display: prince-footnote; display: footnote;
+}
+
+
+@page {
+    @footnotes {
+        border-top: solid black thin;
+        padding-top: 8pt
+    }
 }
 }
 </style>
 </head>
-<body>
+<body lang="de">
 <header>
     <h1>Forensische Analyse von .docx-Dateien zur Plagiatserkennung</h1>
     <div class="author">Philipp Hagemeister, <a href="mailto:hagmeister@cs.uni-duesseldorf.de">hagemeister@cs.uni-duesseldorf.de</a></div>
 </header>
 
-<p>Um von Ghostwritern erstellte Arbeiten zu erkennen, können mithilfe des <em>dplagiat</em>-Tools Metadaten aus docx<span class="footnote">formal Office Open XML Document</span>-Dateien extrahiert werden. Wegen der Ähnlichkeiten der Dokumentenformate ist dplagiat weiterhin auch auf von doc<span class="foonote">Microsoft Word Binary</span>-Dateien konvertierte docx-Dateien (mit leichten Informationsverlusten) anwendbar.</p>
+<p lang="de">Um von Ghostwritern erstellte Arbeiten zu erkennen, können mithilfe des <em>dplagiat</em>-Tools Metadaten aus docx<span class="footnote">formal Office Open XML Document</span>-Dateien extrahiert werden. Wegen der Ähnlichkeiten der Dokumentenformate ist dplagiat weiterhin auch auf von doc<span class="foonote">Microsoft Word Binary</span>-Dateien konvertierte docx-Dateien (mit leichten Informationsverlusten) anwendbar.</p>
 
 <p>dplagiat ist bisher nur auf der Kommandozeile ausführbar und erstellt dann wahlweise eine HTML-Ausgabe-Datei oder fasst die Ergebnisse direkt zusammen. Der Quellcode ist unter <a href="https://github.com/phihag/dplagiat">https://github.com/phihag/dplagiat</a> unter den Bedingungen der  <a href="http://www.gnu.org/licenses/agpl.txt">AGPL</a> frei einseh-, verwend- und veränderbar.</p>
 
 <h2>Ausgabe</h2>
 
-<p>Die wichtigsten von <em>dplagiat</em> erfassten Daten sind die die <code>rsIdr</code>(Section Addition Revision ID / Revision Identifier for Paragraph)-Metadaten<span class="footnote">Dokumentiert in <a href="http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-376,%20Fourth%20Edition,%20Part%201%20-%20Fundamentals%20And%20Markup%20Language%20Reference.zip">ECMA-376 4th edition Part 1, § 17.15.1.70</a></span>. Das Textverarbeitungsprogramm (z.B. Microsoft Office) wählt bei jedem Speichervorgang einen zufälligen Wert, mit dem alle seit dem letztem Speichervorgang hinzugefügten, entfernten oder bearbeiteten<span class="footnote">(aber nicht anders formatierten)</span> Textteile markiert werden. Mit der <code>rsIdr</code> lassen sich Aussagen über die Länge der einzelnen Arbeitssitzungen und über das Einfügen von Texten aus anderen Dokumenten machen. Allerdings ist keine zeitliche Zuordnung oder Ordnung der Arbeitssitzungen möglich.</p>
+<p>Die wichtigsten von <em>dplagiat</em> erfassten Daten sind die die <code>rsIdr</code><span class="footnote">Section Addition Revision ID / Revision Identifier for Paragraph</span>-Metadaten<span class="footnote">Dokumentiert in <a href="http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-376,%20Fourth%20Edition,%20Part%201%20-%20Fundamentals%20And%20Markup%20Language%20Reference.zip">ECMA-376 4th edition Part 1, § 17.15.1.70</a></span>. Das Textverarbeitungsprogramm (z.B. Microsoft Office) wählt bei jedem Speichervorgang einen zufälligen Wert, mit dem alle seit dem letztem Speichervorgang hinzugefügten, entfernten oder bearbeiteten<span class="footnote">(aber nicht anders formatierten)</span> Textteile markiert werden. Mit der <code>rsIdr</code> lassen sich Aussagen über die Länge der einzelnen Arbeitssitzungen und über das Einfügen von Texten aus anderen Dokumenten machen. Allerdings ist keine zeitliche Zuordnung oder Ordnung der Arbeitssitzungen möglich.</p>
 
 <p>Außerdem erlauben Anzahl der Speichervorgänge, Erstellungs- und das Bearbeitungsdatum eine Einordnung der <code>rsIdr</code>-Informationen. Die nachfolgende Tabelle zeigt, welche Auswirkungen häufige Operationen auf diese Daten (mit Microsoft Office) haben:</p>
 
