@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', onLoad, false);
 </script>
 <style type="text/css">
 h1 {margin-top: 0; margin-bottom: 0.5em;}
-p {margin-bottom: 0.5em;}
+p {margin-bottom: 0.8em;}
 #checksum,#template {font-family: monospace;}
 @media screen,tv,handheld,projection,tty {
     #revs {width: 15em; position: absolute; position: fixed; right: 0; top: 0; height: 100%; overflow-y: auto;}
