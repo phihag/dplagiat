@@ -188,7 +188,7 @@ document.addEventListener('DOMContentLoaded', onLoad, false);
     body {font-size: 9pt;}
     h1 {text-align: center;}
     #revs {float: right; margin-left: 1.5em; margin-bottom: 1em;}
-    #revs a {display: block; text-decoration: none !important; font-size: 110%;}
+    #revs a {display: block; text-decoration: none !important; font-size: 110%; padding: 0.1em 0.1em 0.1em 0.1em; font-family: sans-serif;}
 }
 @media x-prince {
     #revs a {color: black !important; padding: 0.35em 0.3em 0.35em 0.3em; font-family: sans-serif;}
@@ -205,7 +205,7 @@ document.addEventListener('DOMContentLoaded', onLoad, false);
 <body>
 <h1></h1>
 <p>
-<div>SHA256: <span id="checksum"></span></div>
+<div>SHA2-256: <span id="checksum"></span></div>
 <div>Anzahl Speichervorgänge: <strong id="saveCount"></strong></div>
 <div>Autor: <span id="creator"></span> (Zuletzt geändert von <span id="lastModifiedBy"></span>)</div>
 <div id="titleContainer"></div>
