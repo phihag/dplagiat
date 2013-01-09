@@ -62,15 +62,18 @@ def main():
 
     if not args:
         parser.error('Expected at least one file as argument')
+    if if opts.open_pdf and not opts.print_prince:
+        parser.error('Cannot display PDF, because we\'re not writing one. Specify -P to create a PDF.')
     for fn in args:
         htmlFn = analyze(fn, opts)
         if opts.open_browser:
             webbrowser.open('file://' + os.path.abspath(htmlFn))
         assert htmlFn.endswith('.html')
-        pdfFn = htmlFn[:-len('.html')] + '.pdf'
-        subprocess.check_call(['prince', '-o', pdfFn, '--media', 'x-prince', htmlFn])
-        if opts.open_pdf:
-            subprocess.check_call(['xdg-open', pdfFn])
+        if opts.print_prince:
+            pdfFn = htmlFn[:-len('.html')] + '.pdf'
+            subprocess.check_call(['prince', '-o', pdfFn, '--media', 'x-prince', htmlFn])
+            if opts.open_pdf:
+                subprocess.check_call(['xdg-open', pdfFn])
 
 def _xpath_text(root, xpath):
     nodes = root.xpath(xpath, namespaces=_DOCX_NAMESPACES)
