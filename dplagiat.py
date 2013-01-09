@@ -127,7 +127,6 @@ def _colors(alpha=0.8):
 def _revisionHTML(revData, docData):
     out = etree.fromstring(
 """
-<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8" />
@@ -175,6 +174,8 @@ function onLoad() {
 document.addEventListener('DOMContentLoaded', onLoad, false);
 </script>
 <style type="text/css">
+h1 {margin-top: 0; margin-bottom: 0.5em;}
+p {margin-bottom: 0.5em;}
 #checksum,#template {font-family: monospace;}
 @media screen,tv,handheld,projection,tty {
     #revs {width: 15em; position: absolute; position: fixed; right: 0; top: 0; height: 100%; overflow-y: auto;}
@@ -205,12 +206,12 @@ document.addEventListener('DOMContentLoaded', onLoad, false);
 <body>
 <h1></h1>
 <p>
-<div>SHA2-256: <span id="checksum"></span></div>
-<div>Anzahl Speichervorgänge: <strong id="saveCount"></strong></div>
-<div>Autor: <span id="creator"></span> (Zuletzt geändert von <span id="lastModifiedBy"></span>)</div>
-<div id="titleContainer"></div>
-<div>Erstellt: <span id="created"/>, zuletzt bearbeitet: <span id="modified"/>, zuletzt gedruckt: <span id="last_printed"/></div>
-<div><span id="appId"></span> (<span id="template"></span>)</div>
+SHA2-256: <span id="checksum"></span><br/>
+Anzahl Speichervorgänge: <strong id="saveCount"></strong><br/>
+Autor: <span id="creator"></span> (Zuletzt geändert von <span id="lastModifiedBy"></span>)<br/>
+<span id="titleContainer"></span><br/>
+Erstellt: <span id="created"/>, zuletzt bearbeitet: <span id="modified"/>, zuletzt gedruckt: <span id="last_printed"/><br/>
+<span id="appId"></span> (<span id="template"></span>)<br/>
 </p>
 
 <div id="revs"/>
@@ -284,7 +285,7 @@ document.addEventListener('DOMContentLoaded', onLoad, false);
         revStyleNode.text += '}\n'
         revStyleNode.text += '\n'
 
-    return etree.tostring(out)
+    return b'<!DOCTYPE html>\n' + etree.tostring(out)
 
 
 def docx_properties(zf, filename, opts):
