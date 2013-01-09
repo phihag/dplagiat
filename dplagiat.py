@@ -13,6 +13,8 @@ import itertools
 import os.path
 import operator
 import optparse
+import subprocess
+import webbrowser
 import xml.dom.minidom
 import zipfile
 
@@ -50,16 +52,25 @@ def main():
     parser = optparse.OptionParser('%prog file [file..]')
     parser.add_option('-i', '--handle-images', action='store_true')
     parser.add_option('--extract-images', action='store_true')
-    parser.add_option('-r', '--write-revision-html', action='store_true')
     parser.add_option('-t', '--text-output', action='store_true', help='Output information on stdout')
     parser.add_option('-z', '--extract-zip', action='store_true', help='Extract all files in the .docx document')
+    parser.add_option('-P', '--print-prince', action='store_true', help='Print the file with print')
+    parser.add_option('-b', '--open-browser', action='store_true', help='Open HTML in browser')
+    parser.add_option('-o', '--open-pdf', action='store_true', help='Open PDF in browser')
     parser.add_option('--extract-dir', metavar='DIR', default='./extracted')
     opts,args = parser.parse_args()
 
     if not args:
         parser.error('Expected at least one file as argument')
     for fn in args:
-        analyze(fn, opts)
+        htmlFn = analyze(fn, opts)
+        if opts.open_browser:
+            webbrowser.open('file://' + os.path.abspath(htmlFn))
+        assert htmlFn.endswith('.html')
+        pdfFn = htmlFn[:-len('.html')] + '.pdf'
+        subprocess.check_call(['prince', '-o', pdfFn, '--media', 'x-prince', htmlFn])
+        if opts.open_pdf:
+            subprocess.check_call(['xdg-open', pdfFn])
 
 def _xpath_text(root, xpath):
     nodes = root.xpath(xpath, namespaces=_DOCX_NAMESPACES)
@@ -162,10 +173,27 @@ document.addEventListener('DOMContentLoaded', onLoad, false);
 </script>
 <style type="text/css">
 #checksum,#template {font-family: monospace;}
-#revs {width: 15em; position: absolute; position: fixed; right: 0; top: 0; height: 100%; overflow-y: auto;}
-#revs a {display: block; color: black !important; text-decoration: none !important; font-size: 110%; padding: 0.5em 0em 0.5em 0.65em; font-family: sans-serif; }
-#text {white-space: pre-wrap; margin-right: 17em;}
-.text-shaded {opacity: 0.9;}
+@media screen,tv,handheld,projection,tty {
+    #revs {width: 15em; position: absolute; position: fixed; right: 0; top: 0; height: 100%; overflow-y: auto;}
+    #revs a {display: block; color: black !important; text-decoration: none !important; font-size: 110%; padding: 0.5em 0em 0.5em 0.65em; font-family: sans-serif; }
+    .text-shaded {opacity: 0.9;}
+    #text {margin-right: 17em;}
+}
+#text {white-space: pre-wrap;}
+@media print,x-prince {
+    html,body {margin: 0; padding: 0;}
+    body {font-size: 9pt;}
+    h1 {text-align: center;}
+    #revs {float: right; margin-left: 1.5em; margin-bottom: 1em;}
+    #revs a {display: block; text-decoration: none !important; font-size: 110%;}
+}
+@media x-prince {
+    #revs a {color: black !important; padding: 0.35em 0.3em 0.35em 0.3em; font-family: sans-serif;}
+}
+
+@page { size: a4;}
+
+
 </style>
 <style type="text/css" id="revStyle">
 
@@ -228,7 +256,11 @@ document.addEventListener('DOMContentLoaded', onLoad, false);
     revsNode = out.xpath('//*[@id="revs"]')[0]
     for rev in revOrder:
         revNode = etree.Element('a')
-        revNode.text = rev + ' (' + str(revBytes[rev]) + ' Zeichen)'
+        revIdNode = etree.Element('span')
+        revIdNode.attrib['class'] = 'revid'
+        revIdNode.text = rev
+        revIdNode.tail = ' (' + str(revBytes[rev]) + ' Zeichen)'
+        revNode.append(revIdNode)
         revNode.attrib['title'] = str(int(100 * revBytes[rev] / byteCount)) + '%'
         revNode.attrib['href'] = '#first-' + rev
         revNode.attrib['class'] = 'rev-' + rev
@@ -236,9 +268,15 @@ document.addEventListener('DOMContentLoaded', onLoad, false);
         revsNode.append(revNode)
 
     revStyleNode = out.xpath('//style[@id="revStyle"]')[0]
-    for rev,color,shadedColor in zip(revOrder, _colors(0.7), _colors(0.2)):
-        revStyleNode.text += '.rev-%s {background-color: %s;}\n' % (rev,color)
-        revStyleNode.text += '.rev-%s.text-shaded {background-color: %s;}\n' % (rev,shadedColor)
+    for rev,color,shadedColor,printColor in zip(revOrder, _colors(0.7), _colors(0.2), _colors(1)):
+        revStyleNode.text += '@media screen,tv,handheld,projection,tty,x-prince {\n'
+        revStyleNode.text += '  .rev-%s {background-color: %s;}\n' % (rev,color)
+        revStyleNode.text += '  .rev-%s.text-shaded {background-color: %s;}\n' % (rev,shadedColor)
+        revStyleNode.text += '}\n'
+        revStyleNode.text += '@media print {\n'
+        revStyleNode.text += '  .rev-%s {color: %s;}\n' % (rev,printColor)
+        revStyleNode.text += '}\n'
+        revStyleNode.text += '\n'
 
     return etree.tostring(out)
 
@@ -320,13 +358,13 @@ def docx_properties(zf, filename, opts):
 
     doc = etree.fromstring(zf.read('word/document.xml'))
     revData = docx_docRevisions(doc)
-    if opts.write_revision_html:
-        html = _revisionHTML(revData, res)
-        assert isinstance(html, bytes)
-        if not os.path.exists(opts.extract_dir):
-            os.makedirs(opts.extract_dir)
-        with open(os.path.join(opts.extract_dir, res['filename'] + '.html'), 'wb') as outf:
-            outf.write(html)
+    html = _revisionHTML(revData, res)
+    assert isinstance(html, bytes)
+    if not os.path.exists(opts.extract_dir):
+        os.makedirs(opts.extract_dir)
+    htmlFn = os.path.join(opts.extract_dir, res['filename'] + '.html')
+    with open(htmlFn, 'wb') as outf:
+        outf.write(html)
 
     if opts.extract_zip:
         outdir = os.path.join(opts.extract_dir, res['filename'] + '_zip')
@@ -350,10 +388,12 @@ def docx_properties(zf, filename, opts):
     files.discard('word/_rels/footnotes.xml.rels') # Automatically generated based on text
     # print(files) # Remaining files are ignored for now
 
+    return htmlFn
+
 
 def analyze(fn, opts):
     with zipfile.ZipFile(fn) as zf:
-        ps = docx_properties(zf, fn, opts)
+        return docx_properties(zf, fn, opts)
 
 
 if __name__ == '__main__':
