@@ -62,7 +62,7 @@ def main():
 
     if not args:
         parser.error('Expected at least one file as argument')
-    if if opts.open_pdf and not opts.print_prince:
+    if opts.open_pdf and not opts.print_prince:
         parser.error('Cannot display PDF, because we\'re not writing one. Specify -P to create a PDF.')
     for fn in args:
         htmlFn = analyze(fn, opts)
@@ -271,13 +271,16 @@ document.addEventListener('DOMContentLoaded', onLoad, false);
         revsNode.append(revNode)
 
     revStyleNode = out.xpath('//style[@id="revStyle"]')[0]
-    for rev,color,shadedColor,printColor in zip(revOrder, _colors(0.7), _colors(0.2), _colors(1)):
-        revStyleNode.text += '@media screen,tv,handheld,projection,tty,x-prince {\n'
+    for rev,color,shadedColor,printColor,princeColor in zip(revOrder, _colors(0.7), _colors(0.2), _colors(1), _colors(0.6)):
+        revStyleNode.text += '@media screen,tv,handheld,projection,tty {\n'
         revStyleNode.text += '  .rev-%s {background-color: %s;}\n' % (rev,color)
         revStyleNode.text += '  .rev-%s.text-shaded {background-color: %s;}\n' % (rev,shadedColor)
         revStyleNode.text += '}\n'
         revStyleNode.text += '@media print {\n'
         revStyleNode.text += '  .rev-%s {color: %s;}\n' % (rev,printColor)
+        revStyleNode.text += '}\n'
+        revStyleNode.text += '@media x-prince {\n'
+        revStyleNode.text += '  .rev-%s {background-color: %s;}\n' % (rev,princeColor)
         revStyleNode.text += '}\n'
         revStyleNode.text += '\n'
 
